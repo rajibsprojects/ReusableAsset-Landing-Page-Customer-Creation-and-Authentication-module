@@ -1,0 +1,187 @@
+{
+  "brand": {
+    "name": "MADAM BOUTIQUE & MADAM FASHIONS",
+    "theme": "light",
+    "vibe": "Premium, elegant, traditional Indian craftsmanship + contemporary boutique elegance."
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Playfair Display",
+      "body": "Outfit",
+      "accent_script": "Great Vibes"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-heading tracking-tight",
+      "h2": "text-3xl sm:text-4xl font-heading tracking-tight",
+      "h3": "text-2xl sm:text-3xl font-heading",
+      "h4": "text-xl sm:text-2xl font-heading",
+      "body": "text-base font-body leading-relaxed",
+      "small": "text-sm font-body",
+      "accent": "text-2xl sm:text-3xl font-accent_script italic text-primary"
+    },
+    "rules": [
+      "Never use Inter or generic sans for headings.",
+      "Use tight letter spacing for large headings.",
+      "Overlines/Labels must be uppercase, tiny, wide spacing (tracking-[0.2em])."
+    ]
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#002147",
+      "light": "#1A3A5F",
+      "dark": "#00122B",
+      "foreground": "#FFFFFF"
+    },
+    "secondary": {
+      "DEFAULT": "#4A6572",
+      "foreground": "#FFFFFF"
+    },
+    "accent": {
+      "DEFAULT": "#B0C4DE",
+      "metallic_silver": "#C0C0C0",
+      "foreground": "#002147"
+    },
+    "background": {
+      "DEFAULT": "#FDFDFD",
+      "off_white": "#F4F7F9",
+      "cream_card": "#FAFAFA",
+      "blue_grey": "#E3E8EC"
+    },
+    "text": {
+      "primary": "#0A1128",
+      "secondary": "#4A6572",
+      "muted": "#7A8C99"
+    },
+    "forbidden": [
+      "burgundy",
+      "maroon",
+      "red",
+      "strong purple",
+      "excessive gradients",
+      "neon"
+    ]
+  },
+  "visual_enhancers": {
+    "motifs": [
+      "Subtle Indian floral/paisley line-art corners in light silver/blue-grey.",
+      "Thin divider ornaments (1px solid with a tiny central diamond or dot)."
+    ],
+    "cards": {
+      "default": "bg-cream_card border border-accent/30 shadow-sm rounded-none md:rounded-sm",
+      "auth_card": "bg-white/90 backdrop-blur-md border border-white/40 shadow-xl p-8 sm:p-12 rounded-lg"
+    },
+    "buttons": {
+      "primary": "bg-primary text-white hover:bg-primary-light transition-colors px-6 py-3 rounded-sm font-medium tracking-wide",
+      "secondary": "bg-transparent border border-primary text-primary hover:bg-primary hover:text-white transition-colors px-6 py-3 rounded-sm font-medium tracking-wide",
+      "google": "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 px-4 py-2 w-full rounded-sm"
+    },
+    "surfaces": {
+      "header": "bg-white/95 backdrop-blur-xl border-b border-accent/20 sticky top-0 z-50",
+      "top_bar": "bg-primary text-white text-xs py-2"
+    }
+  },
+  "spacing_and_layout": {
+    "rhythm": "Generous spacing. Use py-16 to py-24 for main sections.",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_bento": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12",
+    "image_constraints": "max-h-[80vh] object-cover"
+  },
+  "components": [
+    {
+      "name": "TopBar",
+      "description": "Slim dark blue bar. Left: 'Crafted with Care | Designed for You'. Right: Customer Login / Welcome, Name | My Account | Logout.",
+      "layout": "flex justify-between items-center"
+    },
+    {
+      "name": "Header",
+      "description": "Logo left, Nav center, CTA right. Nav items: Home, Madam Boutique, Madam Fashions, Order Status, Contact Us.",
+      "layout": "flex justify-between items-center py-4"
+    },
+    {
+      "name": "Hero",
+      "description": "Split layout. Left: 'Timeless Styles Crafted Just for You', subtext, script tagline, two CTAs. Right: Model image.",
+      "layout": "grid md:grid-cols-2 gap-8 items-center min-h-[80vh]"
+    },
+    {
+      "name": "AboutBusiness",
+      "description": "Image left, text right. Eyebrow label with motif, serif heading, paragraphs, italic script values row.",
+      "layout": "grid md:grid-cols-2 gap-12 items-center py-20"
+    },
+    {
+      "name": "LinesOfBusiness",
+      "description": "Two large cards (Madam Boutique, Madam Fashions). Round icon, product image, lists, CTA.",
+      "layout": "grid md:grid-cols-2 gap-8 py-20 bg-off_white"
+    },
+    {
+      "name": "AboutOwner",
+      "description": "Photo left, 'A Father Daughter Duo' text right.",
+      "layout": "grid md:grid-cols-2 gap-12 items-center py-20"
+    },
+    {
+      "name": "ContactUs",
+      "description": "4 round-icon columns for phone/WhatsApp, email, social, address. Floral corner motifs.",
+      "layout": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-20 text-center relative"
+    },
+    {
+      "name": "AuthPages",
+      "description": "Login/Signup on soft blurred boutique background. Centered cream cards. Google sign in, email/password.",
+      "layout": "min-h-screen flex items-center justify-center bg-cover bg-center relative"
+    }
+  ],
+  "media": {
+    "images": [
+      {
+        "category": "Hero",
+        "description": "Woman in a blue embroidered dress with a tan shawl",
+        "url": "https://images.unsplash.com/photo-1773439878067-4cdadc0b1124?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBldGhuaWMlMjB3ZWFyJTIwbW9kZWwlMjBibHVlfGVufDB8fHx8MTc4ODcxMjM4NXww&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "AboutBusiness",
+        "description": "threads with spools beside scissors",
+        "url": "https://images.unsplash.com/photo-1578353022142-09264fd64295?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHx0YWlsb3JpbmclMjBmYWJyaWNzJTIwY3JhZnR8ZW58MHx8fHwxNzg4NzEyMzkwfDA&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "LinesOfBusiness_Boutique",
+        "description": "tailoring/measuring craft tools",
+        "url": "https://images.unsplash.com/photo-1457972657980-4c9fddebec8d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwzfHx0YWlsb3JpbmclMjBmYWJyaWNzJTIwY3JhZnR8ZW58MHx8fHwxNzg4NzEyMzkwfDA&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "LinesOfBusiness_Fashions",
+        "description": "Soft folds of cream/white silk fabric",
+        "url": "https://images.unsplash.com/photo-1606259458027-54d2a728b6ab?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHw0fHxmb2xkZWQlMjBzaWxrJTIwZmFicmljfGVufDB8fHx8MTc4ODcxMjM5NXww&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "AboutOwner",
+        "description": "A man sitting next to a little girl on a chair - elegant portrait",
+        "url": "https://images.unsplash.com/photo-1727297156756-662710a371da?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwzfHxmYXRoZXIlMjBkYXVnaHRlciUyMHBvcnRyYWl0JTIwZWxlZ2FudHxlbnwwfHx8fDE3ODg3MTI0MDB8MA&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "AuthBackground",
+        "description": "Boutique clothing store blur background",
+        "url": "https://images.unsplash.com/photo-1769107805465-bfd41863f1a0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MTN8MHwxfHNlYXJjaHwxfHxib3V0aXF1ZSUyMGNsb3RoaW5nJTIwc3RvcmUlMjBibHVyJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3ODg3MTI0MDR8MA&ixlib=rb-4.1.0&q=85"
+      }
+    ]
+  },
+  "accessibility": {
+    "focus": "focus:ring-2 focus:ring-primary focus:outline-none",
+    "contrast": "Ensure APCA standards. White text on primary blue passes.",
+    "testing": "All interactive elements MUST include data-testid attribute"
+  },
+  "instructions_to_main_agent": {
+    "framework": "Use React, Tailwind CSS, Lucide React (for icons like phone, mail, social, motifs).",
+    "auth_flow": "Build Login form, Signup form with radio buttons (Business/Individual), Forgot Password, Account page.",
+    "routing": "Include Phase 2 placeholders: /boutique, /fashions, /order-status, /admin.",
+    "animations": "Use subtle fade-in and slide-up animations for cards and text using Framer Motion.",
+    "images": "Use the provided Unsplash URLs. DO NOT use placeholder text."
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not converge toward generic 'AI slop' outputs. Use generous spacing.",
+    "Do not use transparent backgrounds under content.",
+    "Never apply universal transition: all.",
+    "Do not add .App { text-align: center; }.",
+    "Use Phosphor or Lucide icons, never AI emojis.",
+    "Every interaction needs micro-animations (hover states, focus).",
+    "Use sonner for toasts.",
+    "Prioritize Shadcn/UI for inputs/forms."
+  ]
+}

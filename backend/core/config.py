@@ -1,0 +1,45 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
+def _bool(value: str) -> bool:
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
+class Settings:
+    MONGO_URL: str = os.environ["MONGO_URL"]
+    DB_NAME: str = os.environ["DB_NAME"]
+    CORS_ORIGINS: list = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
+    FRONTEND_URL: str = os.environ.get("FRONTEND_URL", "").rstrip("/")
+
+    EMAIL_PROVIDER: str = os.environ.get("EMAIL_PROVIDER", "console").lower()
+    RESEND_API_KEY: str = os.environ.get("RESEND_API_KEY", "")
+    SENDER_EMAIL: str = os.environ.get("SENDER_EMAIL", "")
+    BUSINESS_NOTIFY_EMAIL: str = os.environ.get("BUSINESS_NOTIFY_EMAIL", "")
+
+    CONTENT_PROVIDER: str = os.environ.get("CONTENT_PROVIDER", "auto").lower()
+    GOOGLE_SHEET_ID_BUSINESS: str = os.environ.get("GOOGLE_SHEET_ID_BUSINESS", "")
+    GOOGLE_SHEET_TAB_OWNER: str = os.environ.get("GOOGLE_SHEET_TAB_OWNER", "Owner_data")
+    APPS_SCRIPT_URL: str = os.environ.get("APPS_SCRIPT_URL", "")
+    APPS_SCRIPT_API_KEY: str = os.environ.get("APPS_SCRIPT_API_KEY", "")
+    CONTENT_CACHE_SECONDS: int = int(os.environ.get("CONTENT_CACHE_SECONDS", "300"))
+
+    PINCODE_API_URL: str = os.environ.get("PINCODE_API_URL", "")
+    EMERGENT_AUTH_SESSION_URL: str = os.environ.get("EMERGENT_AUTH_SESSION_URL", "")
+    EXPOSE_DEV_LINKS: bool = _bool(os.environ.get("EXPOSE_DEV_LINKS", "false"))
+
+    SEED_TEST_USER_EMAIL: str = os.environ.get("SEED_TEST_USER_EMAIL", "")
+    SEED_TEST_USER_PASSWORD: str = os.environ.get("SEED_TEST_USER_PASSWORD", "")
+    SEED_TEST_USER_NAME: str = os.environ.get("SEED_TEST_USER_NAME", "Test Customer")
+
+    SESSION_DAYS: int = 7
+    VERIFICATION_HOURS: int = 24
+    RESET_HOURS: int = 1
+    MAX_LOGIN_ATTEMPTS: int = 5
+    LOCKOUT_MINUTES: int = 15
+
+
+settings = Settings()
