@@ -1,0 +1,21 @@
+{
+  "summary": "Verified GOOGLE_SHEET_ID_CUSTOMER_MASTER switch to NEW native Google Sheet 1jpiygdMaW47DUt8ogKXaOsw773l3j80HDVsc8v6DGhQ. Backend: 7/7 pytest passed. NEW customer registration (CUST-000010 QA NewSheet Tester, B2B) wrote a single row to the NEW sheet with all expected fields including pin 700055 and auth_provider email; the OLD sheet 1tlLffZ_V8ayocK4b82j1DpHMQkS76zbo received nothing for this customer_no. PUT /api/auth/me {city:'Howrah'} updated the same row (still 1 row) with customer_city=Howrah. NEW sheet also contains CUST-000002 Test Customer (pin 700045) and CUST-000006 Rajib Sengupta (pin 411027) from the earlier force-sync. Frontend: UI signup at /signup completed end-to-end (CUST-000011 UI NewSheet 1788729742, Individual/B2C), landed on /account, and NEW sheet has exactly 1 matching row with customer_category='B2C'; OLD sheet has 0 matches. Regression login with test.customer@madamboutique.in / Madam@1234 still works.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_customer_master_new_sheet.py",
+    "/app/test_reports/pytest/new_sheet.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/customer_master.py could log the effective sheet_id on startup for easier ops verification when GOOGLE_SHEET_ID_CUSTOMER_MASTER is changed."
+  ],
+  "updated_files": ["/app/backend/tests/test_customer_master_new_sheet.py"],
+  "success_rate": {"backend": "100% (7/7)", "frontend": "100% (signup->account, sheet write verified)"},
+  "test_credentials": "test.customer@madamboutique.in / Madam@1234 (unchanged)",
+  "seed_data_creation": "Registered 2 QA users during test (API: qa.newsheet.<ts>@example.org -> CUST-000010; UI: qa.newsheet.ui.<ts>@example.org 'UI NewSheet 1788729742' -> CUST-000011). Both Mongo users deleted post-test (deletedCount=2). Per instructions, sheet rows were NOT deleted from either NEW or OLD sheet. Seeded test user and rajib.sengupta.09@gmail.com preserved.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sheet ID switch verified. NEW sheet 1jpiygdMaW47DUt8ogKXaOsw773l3j80HDVsc8v6DGhQ is the active customer_master; OLD sheet 1tlLffZ_V8ayocK4b82j1DpHMQkS76zbo is inert (no new writes). Test file /app/backend/tests/test_customer_master_new_sheet.py can be reused as regression.",
+  "rca of the issue": "No new issue in this iteration; the sheet ID switch works cleanly. Registration and profile updates go through services/customer_master.py -> APPS_SCRIPT_URL with sheetId taken from GOOGLE_SHEET_ID_CUSTOMER_MASTER at request time, so the .env change propagates immediately after backend restart."
+}
