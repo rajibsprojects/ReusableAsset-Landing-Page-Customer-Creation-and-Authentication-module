@@ -28,6 +28,7 @@ Home (Hero, About Business, Lines of Business, About Owner, Contact — dynamic 
 - [x] Apps Script `Code.gs` (getSheet / listImages / appendRows) for production switch
 - [x] README (deployment, env template, checklist, known issues), `.env.example` files, `/app/auth_testing.md`
 - [x] Tested by testing agent (iteration_1): backend 15/15; frontend flows pass. Fixed: email links used ingress Origin → now FRONTEND_URL; mobile horizontal overflow.
+- [x] customer_master Google Sheet sync (2026-06): CustomerMasterService upserts customers (key customer_no) via Apps Script `upsertRow` on register / first Google login / profile update; pending-retry on startup; `POST /api/integrations/customer-master/sync?force=true`; `GET /api/integrations/status`. Apps Script deployed (fails closed on API_KEY); content now served via Apps Script (`_meta.source = apps_script`). Verified iterations 2–3.
 
 ## Backlog (prioritized)
 - P0 (Module 2): Madam Boutique requirement form (header + 5-line detail, dress-type/rate masters from sheets, requirement no. series, save to `madam_boutique_orders` via Apps Script appendRows, emails to owner + customer)

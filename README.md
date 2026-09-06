@@ -56,7 +56,8 @@ Copy `backend/.env.example` → `backend/.env` and `frontend/.env.example` → `
 | `RESEND_API_KEY`, `SENDER_EMAIL` | Resend credentials. Use a verified domain sender in production |
 | `CONTENT_PROVIDER` | `auto` (Apps Script → public sheet → local), `apps_script`, `public_sheet`, `local` |
 | `GOOGLE_SHEET_ID_BUSINESS`, `GOOGLE_SHEET_TAB_OWNER` | `business_owner_data` spreadsheet and tab (`Owner_data`) |
-| `APPS_SCRIPT_URL`, `APPS_SCRIPT_API_KEY` | Deployed Apps Script `/exec` URL + shared secret |
+| `APPS_SCRIPT_URL`, `APPS_SCRIPT_API_KEY` | Deployed Apps Script `/exec` URL + shared secret (Script Property `API_KEY`) |
+| `GOOGLE_SHEET_ID_CUSTOMER_MASTER`, `GOOGLE_SHEET_TAB_CUSTOMER_MASTER` | `customer_master` spreadsheet/tab; every customer is upserted here (key `customer_no`) on sign-up, first Google login and profile update. Re-push all: `POST /api/integrations/customer-master/sync?force=true` |
 | `CONTENT_CACHE_SECONDS` | Server-side content cache TTL |
 | `PINCODE_API_URL` | PIN lookup base URL (India Post) |
 | `EMERGENT_AUTH_SESSION_URL` | Google auth session exchange endpoint |

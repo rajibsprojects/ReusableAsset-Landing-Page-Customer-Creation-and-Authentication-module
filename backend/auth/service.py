@@ -10,6 +10,7 @@ from core.database import db
 from auth.security import hash_password, verify_password, validate_password_strength, generate_token
 from auth.providers.emergent_google import fetch_google_session
 from services.email.service import email_service
+from services.customer_master import customer_master_service
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,7 @@ class AuthService:
         except DuplicateKeyError:
             raise HTTPException(status_code=409, detail="An account with this email already exists. Please login instead.")
         await db.email_verifications.update_one({"token": data.verification_token}, {"$set": {"used": True}})
+        customer_master_service.sync_in_background(user["user_id"])
         await email_service.send_welcome_email(user["email"], user["name"], user["customer_no"])
         return user
 
@@ -170,6 +172,7 @@ class AuthService:
             }
             try:
                 await db.users.insert_one(user)
+                customer_master_service.sync_in_background(user["user_id"])
             except DuplicateKeyError:
                 user = await db.users.find_one({"email": email})
         else:
@@ -213,6 +216,7 @@ class AuthService:
         if updates:
             updates["updated_at"] = now()
             await db.users.update_one({"user_id": user_id}, {"$set": updates})
+            customer_master_service.sync_in_background(user_id)
         return await db.users.find_one({"user_id": user_id}, {"_id": 0})
 
     async def seed_test_user(self) -> None:

@@ -1,4 +1,5 @@
 from core.config import settings  # noqa: F401  (loads .env first)
+import asyncio
 import logging
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ from auth.router import router as auth_router
 from auth.service import auth_service
 from routers.content_router import router as content_router
 from routers.pincode_router import router as pincode_router
+from services.customer_master import customer_master_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -24,6 +26,16 @@ async def root():
 @api_router.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@api_router.post("/integrations/customer-master/sync")
+async def sync_customer_master(force: bool = False):
+    return await customer_master_service.sync_pending(force=force)
+
+
+@api_router.get("/integrations/status")
+async def integrations_status():
+    return {"apps_script_configured": bool(settings.APPS_SCRIPT_URL), "customer_master_sync_enabled": customer_master_service.enabled}
 
 
 api_router.include_router(auth_router)
@@ -43,6 +55,8 @@ app.add_middleware(CORSMiddleware, **cors_kwargs)
 async def on_startup():
     await auth_service.ensure_indexes()
     await auth_service.seed_test_user()
+    if customer_master_service.enabled:
+        asyncio.create_task(customer_master_service.sync_pending())
     logger.info("Startup complete")
 
 

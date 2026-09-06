@@ -1,0 +1,29 @@
+{
+  "summary": "Retested customer_master Google Sheet sync after main agent renamed the sheet header 'customer_ pin' -> 'customer_pin' and ran POST /api/integrations/customer-master/sync?force=true. All PIN-related assertions now pass. 9/10 tests green; 1 failure is a stale expectation in the review request (see below), not a real regression.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/content/business", "issue": "_meta.source is 'apps_script' (not 'public_sheet' as the review request expected). This is because CONTENT_PROVIDER=auto and APPS_SCRIPT_URL is now configured, so AppsScriptProvider precedes PublicSheetProvider in services/content/service.py. Content itself is served correctly (200 with full business fields). Expectation appears stale after enabling Apps Script for customer_master sync."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_customer_master_sync.py",
+    "/app/test_reports/pytest/customer_master_sync.xml"
+  ],
+  "action_items": [
+    "Decide whether GET /api/content/business should still report _meta.source=='public_sheet'. If yes, either set CONTENT_PROVIDER=public_sheet in backend/.env, or reorder providers in services/content/service.py so PublicSheetProvider is tried before AppsScriptProvider for the business tab. Otherwise, update the acceptance criteria to allow 'apps_script'."
+  ],
+  "critical_code_review_comments": [
+    "services/content/service.py: provider order is driven purely by insertion order; adding a new integration silently switches the reported _meta.source. Consider making per-tab provider preference explicit (e.g., business tab always public_sheet, customer_master always apps_script) to prevent this coupling.",
+    "services/customer_master.py COLUMNS is the backend contract; adding a lightweight startup diff against the live sheet header (GET action=getHeaders) would prevent silent typos like the previous 'customer_ pin' regression."
+  ],
+  "updated_files": ["/app/backend/tests/test_customer_master_sync.py"],
+  "success_rate": {"backend": "90% (9/10)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "test.customer@madamboutique.in / Madam@1234 (unchanged)",
+  "seed_data_creation": "Registered 1 QA user (qa.pin.<ts>@example.org, CUST-000009+). Sheet row NOT deleted per instructions. Mongo user cleaned (deletedCount=1). Existing sheet rows CUST-000002 (pin 700045) and CUST-000006 (pin 411027) verified backfilled.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The customer_pin sync bug is fully fixed. Sheet header is now 'customer_pin' (no space); backfill applied; new registrations + PUT /api/auth/me both propagate PIN to the same row within ~6s. Only pending item is the content-source expectation mismatch above — trivial config/ordering decision.",
+  "rca of the issue": "Root cause of the original PIN gap was a stray space in the Google Sheet header cell ('customer_ pin'), while backend COLUMNS in services/customer_master.py wrote key 'customer_pin'. Apps Script upsertRow_ matches headers exactly, so pin was dropped for every row. Mitigation applied by main agent: renamed the sheet header to 'customer_pin' and executed POST /api/integrations/customer-master/sync?force=true which re-upserted all rows. Verified: CUST-000002 pin=700045, CUST-000006 pin=411027, new qa.pin.<ts> registration pin=700055, subsequent PUT /api/auth/me {pin:'700045'} updated same row to 700045."
+}

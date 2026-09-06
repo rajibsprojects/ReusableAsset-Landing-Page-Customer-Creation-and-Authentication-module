@@ -25,6 +25,8 @@ class Settings:
     GOOGLE_SHEET_TAB_OWNER: str = os.environ.get("GOOGLE_SHEET_TAB_OWNER", "Owner_data")
     APPS_SCRIPT_URL: str = os.environ.get("APPS_SCRIPT_URL", "")
     APPS_SCRIPT_API_KEY: str = os.environ.get("APPS_SCRIPT_API_KEY", "")
+    GOOGLE_SHEET_ID_CUSTOMER_MASTER: str = os.environ.get("GOOGLE_SHEET_ID_CUSTOMER_MASTER", "")
+    GOOGLE_SHEET_TAB_CUSTOMER_MASTER: str = os.environ.get("GOOGLE_SHEET_TAB_CUSTOMER_MASTER", "customer_master")
     CONTENT_CACHE_SECONDS: int = int(os.environ.get("CONTENT_CACHE_SECONDS", "300"))
 
     PINCODE_API_URL: str = os.environ.get("PINCODE_API_URL", "")

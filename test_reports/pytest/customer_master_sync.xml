@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="36.573" timestamp="2026-09-06T20:53:18.210382+00:00" hostname="agent-env-ad437137-dbd5-4881-b933-663555ef4bec"><testcase classname="tests.test_customer_master_sync" name="test_integrations_status_configured" time="0.308" /><testcase classname="tests.test_customer_master_sync" name="test_cust_000006_pin_backfilled" time="2.194" /><testcase classname="tests.test_customer_master_sync" name="test_cust_000002_pin_backfilled" time="1.697" /><testcase classname="tests.test_customer_master_sync" name="test_no_legacy_space_header_column" time="1.847" /><testcase classname="tests.test_customer_master_sync" name="test_registration_syncs_pin_to_sheet" time="9.499" /><testcase classname="tests.test_customer_master_sync" name="test_profile_update_pin_updates_same_row" time="10.784" /><testcase classname="tests.test_customer_master_sync" name="test_mongo_sync_flags" time="2.413" /><testcase classname="tests.test_customer_master_sync" name="test_force_sync_endpoint" time="5.357" /><testcase classname="tests.test_customer_master_sync" name="test_seed_login_works" time="0.441" /><testcase classname="tests.test_customer_master_sync" name="test_content_business_public_sheet_source" time="1.947"><failure message="AssertionError: {'source': 'apps_script', 'fetched_at': '2026-09-06T20:53:54Z'}&#10;assert 'apps_script' == 'public_sheet'&#10;  &#10;  - public_sheet&#10;  + apps_script">def test_content_business_public_sheet_source():
+        r = requests.get(f"{API}/content/business")
+        assert r.status_code == 200
+        body = r.json()
+        meta = body.get("_meta") or {}
+&gt;       assert meta.get("source") == "public_sheet", meta
+E       AssertionError: {'source': 'apps_script', 'fetched_at': '2026-09-06T20:53:54Z'}
+E       assert 'apps_script' == 'public_sheet'
+E         
+E         - public_sheet
+E         + apps_script
+
+backend/tests/test_customer_master_sync.py:170: AssertionError</failure></testcase></testsuite></testsuites>

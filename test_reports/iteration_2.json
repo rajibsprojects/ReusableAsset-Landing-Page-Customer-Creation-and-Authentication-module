@@ -1,0 +1,36 @@
+{
+  "summary": "Focused testing of the customer_master Google Sheet sync bugfix. Backend: /api/integrations/status returns apps_script_configured=true & customer_master_sync_enabled=true. Full email registration API flow synced new customer CUST-000007 'QA Sheet Tester' (B2B, auth_provider=email) to the sheet; a subsequent PUT /api/auth/me updated the SAME row in place (city -> Howrah, address2 -> Near Station, still exactly 1 row for that customer_no). CUST-000006 'Rajib Sengupta' present (regression of original bug). POST /api/integrations/customer-master/sync returned total/synced/failed/enabled with failed=0. Mongo doc for the new user shows sheet_sync_pending=false and sheet_synced_at set. UI signup at /signup completed end-to-end (dev verification link -> details form -> lands on /account, profile shows CUST-000008 'UI Sheet Tester ...'). Sheet row created for the UI user with customer_category=B2C. Regression login with test.customer@madamboutique.in works. ONE data-mapping bug found: customer_pin never syncs to the sheet because the sheet header column is 'customer_ pin' (with a stray space) while the backend writes the key 'customer_pin' - all rows in the sheet (including the pre-existing seed rows and CUST-000006) show an empty pin column.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "customer_master sync (services/customer_master.py -> Apps Script upsertRow)", "issue": "customer_pin is never written to the sheet. The sheet's header cell is 'customer_ pin' (extra space between the underscore and 'pin'), but the app writes the row key 'customer_pin'. Apps Script upsertRow_ matches by exact header name, so the pin column stays blank for ALL customers (verified: CUST-000002, CUST-000006, CUST-000007, CUST-000008 all have customer_ pin=''). Review spec explicitly requires customer_pin '700055' in the row.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_customer_master_sync.py",
+    "/app/test_reports/pytest/customer_master_sync.xml"
+  ],
+  "action_items": [
+    "Fix the customer_pin sync mismatch. Either (a) rename the header in the 'customer_master' Google Sheet from 'customer_ pin' to 'customer_pin' (one-time manual edit — matches services/customer_master.py COLUMNS mapping), or (b) change services/customer_master.py to write the key 'customer_ pin' (with the space) so it matches the existing header. Option (a) is cleaner. After the fix, re-run test_registration_syncs_to_sheet; the PIN assertion (currently the only failing test) should pass."
+  ],
+  "critical_code_review_comments": [
+    "services/customer_master.py: fire-and-forget asyncio.create_task in sync_in_background swallows exceptions in the wrapper; already logged inside sync_user's except block, so acceptable. Good use of sheet_sync_pending flag + startup retry.",
+    "sheets_writer.upsert_row correctly follow_redirects=True (Apps Script 302) and raises on ok:false.",
+    "COLUMNS mapping is source-of-truth on the backend, but the sheet header is authoritative for Apps Script's upsertRow_. Consider adding a startup self-test that fetches the sheet header once and warns if backend keys don't match sheet columns — would have surfaced the 'customer_ pin' typo automatically."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_customer_master_sync.py"
+  ],
+  "success_rate": {"backend": "83% (5/6 tests passed — only the pin assertion failed due to the sheet-header typo)", "frontend": "100% (UI signup e2e worked, sheet row created)"},
+  "test_credentials": "test.customer@madamboutique.in / Madam@1234 (seed, unchanged)",
+  "seed_data_creation": "Created 2 sheet rows during test: CUST-000007 'QA Sheet Tester' and CUST-000008 'UI Sheet Tester 1788727144'. Per instructions, these were NOT deleted from the sheet. Mongo test users (qa.* prefix) were cleaned up; only test.customer@madamboutique.in and rajib.sengupta.09@gmail.com remain.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "After main agent fixes the customer_pin/customer_ pin header mismatch, just re-run: pytest /app/backend/tests/test_customer_master_sync.py -v -o 'addopts=' — all 6 tests should pass. The Apps Script getSheet URL is a reliable read-only way to inspect sync results. Note pytest.ini enables xdist; use -o 'addopts=' or -p no:xdist to disable for module-scoped fixtures.",
+  "rca of the issue": "Reported bug (customers not appended to sheet) is FIXED — new registrations, Google sign-ins, and profile updates now upsert into 'customer_master' via CustomerMasterService.sync_in_background as a BackgroundTask, with idempotent key=customer_no. Verified end-to-end that a fresh registration lands in the sheet within ~6s and a subsequent profile edit updates the same row (no duplicates). A secondary latent data-mapping bug remains: the sheet header cell 'customer_ pin' (extra space) doesn't match the backend column key 'customer_pin', so the PIN column stays blank for every synced row. Reproduction: register any user with pin=700055, wait 6s, GET the sheet via Apps Script — row has customer_ pin='' instead of '700055'. Mitigation: rename the header cell in the Google Sheet to 'customer_pin' (matches COLUMNS in services/customer_master.py)."
+}
