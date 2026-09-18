@@ -1,0 +1,27 @@
+{
+  "summary": "Iteration 6 (backend-only, narrow re-check): Registered CUST-000022 (qa.fmt.1789762844@example.org, mobile 9893135427) with contact_mobile_cntry '+91', contact_other_cntry '+91', contact_other '03312345678'; then PUT /api/auth/me to change other_cntry='+1', contact_other='0212345678'. Verified Apps Script setNumberFormat('@') redeploy: sheet cell now preserves leading '+' on country codes AND leading '0' on landline for BOTH register (createCustomer) and update (updateCustomer) write paths. Series moved from 22 -> 23 with exactly one increment. Login regression and _meta.source=='apps_script' also pass. Mongo qa.* users/sessions cleaned. Sheet rows intentionally NOT deleted.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_sheet_format_recheck.py",
+    "/app/backend/tests/test_sheet_format_verify.py",
+    "/app/test_reports/pytest/iteration_6.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Apps Script fix (setNumberFormat('@') on phone columns before setValues) works for both createCustomer and updateCustomer write paths - iteration_5 minor defect is closed.",
+    "test_sheet_format_recheck.py originally used wrong response shape (Apps Script getSheet returns {ok:true, rows:[...]}). Fixed in the file; used dedicated verify file for post-run assertion. Future testing agents: always index into resp['rows']."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sheet_format_recheck.py",
+    "/app/backend/tests/test_sheet_format_verify.py",
+    "/app/test_reports/iteration_6.json"
+  ],
+  "success_rate": {"backend": "100% (3/3 verify + register/update/login flows all succeeded end-to-end)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "test.customer@madamboutique.in / Madam@1234 (unchanged, still logs in). qa.fmt.1789762844@example.org registered then Mongo-cleaned (sheet row CUST-000022 retained per instructions).",
+  "seed_data_creation": "Registered 1 customer -> CUST-000022 (email qa.fmt.1789762844@example.org, mobile 9893135427). Series is now at 23. Mongo user + session deleted post-run; sheet row preserved.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Series is at 23 -> next new registration will be CUST-000023 (series -> 24). CUST-000022 sheet row currently shows POST-UPDATE values (mbl_cntry='+91', other_cntry='+1', other='0212345678'); initial register wrote '+91'/'03312345678' successfully - both retained the leading '+' and '0', proving the Apps Script setNumberFormat('@') redeploy works. Avoid mobiles 9876543210, 9890788742, 9890789980, 9893135427 in new registrations. All prior iteration_5 tests remain green.",
+  "rca of the issue": "Prior iteration_5 minor bug (Sheets auto-converting '+91'->'91' and '03312345678'->'3312345678') fixed by Apps Script upsertRowUnlocked_ calling range.setNumberFormat('@') before writeValues, coercing the target cells to plain-text format so Sheets does not numeric-parse the strings. Verified on both createCustomer (register) and updateCustomer (PUT /api/auth/me) code paths."
+}

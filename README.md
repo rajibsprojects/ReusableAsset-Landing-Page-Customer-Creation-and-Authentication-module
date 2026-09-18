@@ -117,3 +117,32 @@ Backend (FastAPI): deploy to any Python host (Render, Railway, Fly.io, Vercel Py
 - Resend test mode delivers only to the Resend account owner's address until a domain is verified.
 - The `public_sheet` provider requires the sheet to be shared "Anyone with the link → Viewer"; use Apps Script in production for private sheets.
 - Lines-of-business bullet lists are maintained in `frontend/src/data/linesOfBusiness.js`; the card intro paragraphs come from the sheet.
+
+## Customer data model & Google Sheets (Module 1 addendum)
+
+### Datastores
+- **MongoDB** (backend only, `MONGO_URL`/`DB_NAME`): authentication credentials and sessions — `users` (incl. `password_hash`, bcrypt), `user_sessions`, `email_verifications`, `password_reset_tokens`, `login_attempts` — plus a working copy of the customer profile used for atomic validations.
+- **Google Sheets** (via Apps Script): `customer_master` = business customer record; `customer_series_master` = customer-number sequence.
+- `password` column in `customer_master`: existing legacy column · currently unused by the application · must remain blank · credentials/password hashes are stored separately in MongoDB (`users.password_hash`) · no password or hash is ever included in the Sheets sync payload (`services/customer_master.py::to_row`).
+
+### Phone fields
+Stored separately: `customer_contact_mbl_cntry` (`+91`), `customer_contact_mbl` (digits only), `customer_contact_other_cntry`, `customer_contact_other`. Backend (`auth/phone.py`) normalises separators, strips a redundant `+CC`/`00CC` prefix, rejects letters/symbols, enforces 10-digit `[6-9]…` for `+91` mobiles and 6–12 digits for `+91` landlines. Default country `DEFAULT_COUNTRY_CODE=+91`.
+
+### Duplicate mobile
+Server-side, before any customer creation: `contact_mobile_cntry + normalised mobile` (legacy records without a stored country code match on number alone). Enforced by a partial unique index `uniq_mobile_with_country` for concurrency. Message: "This mobile number is already registered. Please log in or use another mobile number."
+
+### customer_series_master & customer numbers
+- Sheet/tab: `GOOGLE_SHEET_ID_CUSTOMER_SERIES` / `GOOGLE_SHEET_TAB_CUSTOMER_SERIES`; columns `prefix | number` (row 2 = next number). Format `CUSTOMER_NO_PREFIX` + `CUSTOMER_NO_DIGITS` zero-padded → `CUST-000001`.
+- Allocation is server-side only: FastAPI → Apps Script `createCustomer` (one `LockService` transaction: read number → format → create-only write to `customer_master` → increment). The number is consumed **only** when the `customer_master` row is written; failed validation, duplicate email/mobile, incomplete Google profiles and Apps Script errors never consume a number. Frontend never sees or computes numbers.
+- Initial sequence: set `number` to (highest existing customer + 1) before enabling; existing customers are never renumbered.
+- Reuse for another project: copy `Code.gs`, create the two sheets, set the env variables (IDs, tab names, prefix, digits).
+
+### Registration flows
+Email: validate fields → password → country code → normalise/validate mobile → duplicate mobile → duplicate email → create auth account → `createCustomer` → store number → welcome email + owner notification (`BUSINESS_NOTIFY_EMAIL`, subject "New Customer Registration — Madam Fashions").
+Google: authenticate → identity stored with `registration_complete=false` (no number, no sheet row) → Complete Your Profile → same validations → `createCustomer` → emails. Later profile edits update the same sheet row (`upsertRow`), never a new row or a second notification.
+
+### Timestamps
+All customer timestamps are rendered in `APP_TIMEZONE` (Asia/Kolkata) via `core/timezone.py` — e.g. `2026-09-19 01:26:36 IST` — in API responses and sheet cells.
+
+### Session timeout
+`SESSION_IDLE_MINUTES=4`: backend sliding idle window on `user_sessions.last_activity` (expired sessions are deleted and return 401); frontend `SessionGuard` mirrors it with an activity timer + 60 s heartbeat and shows "Your session has expired due to inactivity. Please log in again."
