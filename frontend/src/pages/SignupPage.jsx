@@ -21,15 +21,15 @@ export default function SignupPage() {
 
   return (
     <AuthLayout>
-      <AuthCard icon={UserPlus} label="Sign Up" title={verifying ? "Complete Your Details" : "Create Your Account"} subtitle={verifying ? "Your email is verified. Tell us a little more about you." : "Join Madam Boutique & Madam Fashions"} testId="signup-card">
-        <SignupForm redirectTo={redirectTo} />
-      </AuthCard>
-      <AuthCard icon={LogIn} label="Login" title="Welcome Back" subtitle="Already have an account? Sign in to continue." testId="signup-login-teaser-card" muted>
+      <AuthCard icon={LogIn} label="Login" title="Welcome Back" subtitle="Already have an account? Sign in to continue." testId="signup-login-teaser-card" muted className="order-2 md:order-1">
         <div className="space-y-4">
           <GoogleButton label="Google Sign In" onClick={() => loginWithGoogle(redirectTo)} testId="teaser-login-google-button" />
           <OrnamentDivider><span className="text-xs tracking-wide text-steel">or</span></OrnamentDivider>
           <Link to={ROUTES.login} state={{ from: redirectTo }} className="btn-navy w-full" data-testid="teaser-login-email-button">Login with Email</Link>
         </div>
+      </AuthCard>
+      <AuthCard icon={UserPlus} label="Sign Up" title={verifying ? "Complete Your Details" : "Create Your Account"} subtitle={verifying ? "Your email is verified. Tell us a little more about you." : "Join Madam Boutique & Madam Fashions"} testId="signup-card" className="order-1 md:order-2">
+        <SignupForm redirectTo={redirectTo} />
       </AuthCard>
     </AuthLayout>
   );

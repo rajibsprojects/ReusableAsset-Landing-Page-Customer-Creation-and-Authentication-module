@@ -40,5 +40,13 @@ class EmailService:
     async def send_welcome_email(self, to: str, name: str, customer_no: str) -> bool:
         return await self.send(to, "Welcome to Madam Boutique & Madam Fashions", templates.welcome_email(name, customer_no))
 
+    async def send_new_customer_notification(self, user: dict) -> bool:
+        if not settings.BUSINESS_NOTIFY_EMAIL:
+            logger.warning("BUSINESS_NOTIFY_EMAIL not configured; owner notification skipped")
+            return False
+        mobile = f"{user.get('contact_mobile_cntry') or ''} {user.get('contact_mobile') or ''}".strip()
+        html = templates.new_customer_notification(user.get("name", ""), user.get("email", ""), mobile, user.get("customer_no", ""))
+        return await self.send(settings.BUSINESS_NOTIFY_EMAIL, "New Customer Registration — Madam Fashions", html)
+
 
 email_service = EmailService(build_provider())

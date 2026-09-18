@@ -16,7 +16,7 @@ class SheetsWriter:
     def configured(self) -> bool:
         return bool(self.url)
 
-    async def _post(self, payload: dict) -> dict:
+    async def call(self, payload: dict) -> dict:
         if not self.configured:
             raise RuntimeError("APPS_SCRIPT_URL is not configured")
         if self.api_key:
@@ -30,10 +30,10 @@ class SheetsWriter:
         return data
 
     async def upsert_row(self, sheet_id: str, tab: str, key_column: str, row: dict) -> dict:
-        return await self._post({"action": "upsertRow", "sheetId": sheet_id, "tab": tab, "keyColumn": key_column, "row": row})
+        return await self.call({"action": "upsertRow", "sheetId": sheet_id, "tab": tab, "keyColumn": key_column, "row": row})
 
     async def append_rows(self, sheet_id: str, tab: str, rows: list[list]) -> dict:
-        return await self._post({"action": "appendRows", "sheetId": sheet_id, "tab": tab, "rows": rows})
+        return await self.call({"action": "appendRows", "sheetId": sheet_id, "tab": tab, "rows": rows})
 
 
 sheets_writer = SheetsWriter(settings.APPS_SCRIPT_URL, settings.APPS_SCRIPT_API_KEY)

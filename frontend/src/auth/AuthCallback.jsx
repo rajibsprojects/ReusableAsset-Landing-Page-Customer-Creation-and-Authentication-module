@@ -22,6 +22,11 @@ export function AuthCallback() {
         const user = await authService.exchangeGoogleSession(sessionId);
         setUser(user);
         window.history.replaceState(null, "", location.pathname);
+        if (!user.registration_complete) {
+          toast.info("Welcome! Please complete your profile to finish registration.");
+          navigate("/account", { replace: true });
+          return;
+        }
         navigate(consumePostLoginRedirect("/account"), { replace: true, state: { user } });
       } catch (error) {
         toast.error(getErrorMessage(error, "Google sign-in failed. Please try again."));

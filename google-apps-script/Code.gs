@@ -3,19 +3,22 @@
  *
  * Deploy: Extensions > Apps Script > Deploy > New deployment > Web app
  *   Execute as: Me   |   Who has access: Anyone
- * Then set APPS_SCRIPT_URL (the /exec URL) and APPS_SCRIPT_API_KEY in the backend .env.
+ * Configuration lives OUTSIDE this file: the backend sends Spreadsheet IDs / tab names in each request (from its
+ * environment variables) and the shared secret is a Script Property named API_KEY.
  * Security: requests are rejected unless the Script Property API_KEY is set AND matches `key` (fails closed).
+ * The backend sends every request as POST with a JSON body (key included in the body, not the URL).
+ * Passwords / password hashes are never sent to or stored in any sheet.
  *
- * Contract used by the website backend:
- *   GET {url}?action=getSheet&sheetId=<id>&tab=<tabName>&key=<API_KEY>
- *     -> { ok: true, rows: [ { header1: value, header2: value, ... }, ... ] }
- *   GET {url}?action=listImages&folderId=<driveFolderId>&key=<API_KEY>
- *     -> { ok: true, files: [ { id, name, url } ] }
- *   POST {url}  body: { action: "appendRows", sheetId, tab, rows: [[...], [...]], key }
- *     -> { ok: true, appended: n }        (reserved for Module 2/3 order writes)
- *   POST {url}  body: { action: "upsertRow", sheetId, tab, keyColumn: "customer_no", row: { header: value, ... }, key }
- *     -> { ok: true, action: "inserted" | "updated", rowNumber: n }   (customer_master sync)
- *     Writes only into columns whose header matches a key in `row`; creates the header row if the tab is empty.
+ * Actions (JSON body, all require "key"):
+ *   getSheet      { sheetId, tab }                                  -> { ok, rows: [ {header: value} ] }
+ *   listImages    { folderId }                                      -> { ok, files: [ {id, name, url} ] }
+ *   appendRows    { sheetId, tab, rows: [[...]] }                   -> { ok, appended }   (reserved for Module 2/3)
+ *   upsertRow     { sheetId, tab, keyColumn, row }                  -> { ok, action: inserted|updated, rowNumber }
+ *   createCustomer{ seriesSheetId, seriesTab, prefix, digits,
+ *                   sheetId, tab, keyColumn, row }                  -> { ok, customerNumber, nextNumber, rowNumber }
+ *     One LockService-protected transaction: read series number -> format customer number -> write customer_master
+ *     row -> increment series. The series is incremented ONLY after the customer row has been written successfully,
+ *     so failed writes never consume a number, and concurrent registrations always receive unique numbers.
  */
 var API_KEY = PropertiesService.getScriptProperties().getProperty('API_KEY') || '';
 
@@ -36,11 +39,26 @@ function handle_(p) {
       case 'getSheet': return json_({ ok: true, rows: getSheetRows_(p.sheetId, p.tab) });
       case 'listImages': return json_({ ok: true, files: listImages_(p.folderId) });
       case 'appendRows': return json_({ ok: true, appended: appendRows_(p.sheetId, p.tab, p.rows || []) });
-      case 'upsertRow': return json_(upsertRow_(p.sheetId, p.tab, p.keyColumn, p.row || {}));
+      case 'upsertRow': return json_(withLock_(function () { return upsertRowUnlocked_(p.sheetId, p.tab, p.keyColumn, p.row || {}); }));
+      case 'createCustomer': return json_(createCustomer_(p));
       default: return json_({ ok: false, error: 'Unknown action' });
     }
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function norm_(s) {
+  return String(s).toLowerCase().replace(/\s+/g, '');
+}
+
+function withLock_(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    return fn();
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -74,43 +92,66 @@ function appendRows_(sheetId, tab, rows) {
   return rows.length;
 }
 
-function upsertRow_(sheetId, tab, keyColumn, row) {
+// Insert or update one row keyed on `keyColumn`. Header matching is case/whitespace-insensitive. Caller holds the lock.
+// createOnly=true makes the operation strictly insert-only: an existing key throws (used by createCustomer).
+function upsertRowUnlocked_(sheetId, tab, keyColumn, row, createOnly) {
   var ss = SpreadsheetApp.openById(sheetId);
   var sheet = ss.getSheetByName(tab) || ss.insertSheet(tab);
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var lastCol = sheet.getLastColumn();
-    var headers = lastCol ? sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); }) : [];
-    if (!headers.length || headers.join('') === '') {
-      headers = Object.keys(row);
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    }
-    // Match headers to row keys ignoring case and internal whitespace (e.g. "customer_ pin" == "customer_pin").
-    var norm = function (s) { return String(s).toLowerCase().replace(/\s+/g, ''); };
-    var rowByNorm = {};
-    Object.keys(row).forEach(function (k) { rowByNorm[norm(k)] = row[k]; });
-    var keyIdx = headers.map(norm).indexOf(norm(keyColumn));
-    if (keyIdx < 0) throw new Error('Key column not found in header: ' + keyColumn);
-    var lastRow = sheet.getLastRow();
-    var targetRow = -1;
-    if (lastRow > 1) {
-      var keys = sheet.getRange(2, keyIdx + 1, lastRow - 1, 1).getValues();
-      for (var i = 0; i < keys.length; i++) {
-        if (String(keys[i][0]).trim() === String(row[keyColumn]).trim()) { targetRow = i + 2; break; }
-      }
-    }
-    var existing = targetRow > 0 ? sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0] : headers.map(function () { return ''; });
-    var values = headers.map(function (h, i) { var n = norm(h); return rowByNorm.hasOwnProperty(n) ? rowByNorm[n] : existing[i]; });
-    if (targetRow > 0) {
-      sheet.getRange(targetRow, 1, 1, headers.length).setValues([values]);
-      return { ok: true, action: 'updated', rowNumber: targetRow };
-    }
-    sheet.appendRow(values);
-    return { ok: true, action: 'inserted', rowNumber: sheet.getLastRow() };
-  } finally {
-    lock.releaseLock();
+  var lastCol = sheet.getLastColumn();
+  var headers = lastCol ? sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); }) : [];
+  if (!headers.length || headers.join('') === '') {
+    headers = Object.keys(row);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
+  var rowByNorm = {};
+  Object.keys(row).forEach(function (k) { rowByNorm[norm_(k)] = row[k]; });
+  var keyIdx = headers.map(norm_).indexOf(norm_(keyColumn));
+  if (keyIdx < 0) throw new Error('Key column not found in header: ' + keyColumn);
+  var keyValue = String(rowByNorm[norm_(keyColumn)] || '').trim();
+  if (!keyValue) throw new Error('Key value missing for column: ' + keyColumn);
+  var lastRow = sheet.getLastRow();
+  var targetRow = -1;
+  if (lastRow > 1) {
+    var keys = sheet.getRange(2, keyIdx + 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < keys.length; i++) {
+      if (String(keys[i][0]).trim() === keyValue) { targetRow = i + 2; break; }
+    }
+  }
+  var existing = targetRow > 0 ? sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0] : headers.map(function () { return ''; });
+  var values = headers.map(function (h, i) { var n = norm_(h); return rowByNorm.hasOwnProperty(n) ? rowByNorm[n] : existing[i]; });
+  if (targetRow > 0) {
+    if (createOnly) throw new Error('Customer record already exists for ' + keyColumn + ' ' + keyValue + ' (create-only operation)');
+    sheet.getRange(targetRow, 1, 1, headers.length).setValues([values]);
+    return { ok: true, action: 'updated', rowNumber: targetRow };
+  }
+  sheet.appendRow(values);
+  return { ok: true, action: 'inserted', rowNumber: sheet.getLastRow() };
+}
+
+// Transactional customer creation: series read -> customer_master write -> series increment, under one lock.
+function createCustomer_(p) {
+  return withLock_(function () {
+    var series = SpreadsheetApp.openById(p.seriesSheetId).getSheetByName(p.seriesTab);
+    if (!series) throw new Error('Series tab not found: ' + p.seriesTab);
+    var headers = series.getRange(1, 1, 1, Math.max(series.getLastColumn(), 2)).getValues()[0].map(norm_);
+    var prefixCol = headers.indexOf('prefix') + 1, numberCol = headers.indexOf('number') + 1;
+    if (!prefixCol || !numberCol) throw new Error('customer_series_master must have "prefix" and "number" headers');
+    var seriesPrefix = String(series.getRange(2, prefixCol).getValue() || p.prefix || '');
+    var current = parseInt(series.getRange(2, numberCol).getValue(), 10);
+    if (isNaN(current) || current < 1) throw new Error('customer_series_master number is not initialised');
+    var padded = String(current), width = parseInt(p.digits, 10) || 6;
+    while (padded.length < width) padded = '0' + padded;
+    var customerNumber = seriesPrefix + padded;
+
+    var row = {};
+    Object.keys(p.row || {}).forEach(function (k) { row[k] = p.row[k]; });
+    row[p.keyColumn || 'customer_no'] = customerNumber;
+    var result = upsertRowUnlocked_(p.sheetId, p.tab, p.keyColumn || 'customer_no', row, true); // create-only; throws on failure -> no increment
+
+    series.getRange(2, numberCol).setValue(current + 1);
+    SpreadsheetApp.flush();
+    return { ok: true, customerNumber: customerNumber, nextNumber: current + 1, rowNumber: result.rowNumber };
+  });
 }
 
 function json_(obj) {

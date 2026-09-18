@@ -10,6 +10,7 @@ from auth.service import auth_service
 from routers.content_router import router as content_router
 from routers.pincode_router import router as pincode_router
 from services.customer_master import customer_master_service
+from services.customer_series import customer_series_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -35,7 +36,11 @@ async def sync_customer_master(force: bool = False):
 
 @api_router.get("/integrations/status")
 async def integrations_status():
-    return {"apps_script_configured": bool(settings.APPS_SCRIPT_URL), "customer_master_sync_enabled": customer_master_service.enabled}
+    return {
+        "apps_script_configured": bool(settings.APPS_SCRIPT_URL),
+        "customer_master_sync_enabled": customer_master_service.enabled,
+        "customer_series_configured": customer_series_service.configured,
+    }
 
 
 api_router.include_router(auth_router)

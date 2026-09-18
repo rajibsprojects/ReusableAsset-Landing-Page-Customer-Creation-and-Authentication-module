@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { AuthCallback } from "@/auth/AuthCallback";
+import { SessionGuard } from "@/auth/SessionGuard";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { BusinessContentProvider } from "@/hooks/useBusinessContent";
 import { Layout } from "@/components/layout/Layout";
@@ -44,6 +45,7 @@ function App() {
     <BrowserRouter>
       <BusinessContentProvider>
         <AuthProvider>
+          <SessionGuard />
           <AppRouter />
           <Toaster position="top-right" richColors closeButton />
         </AuthProvider>

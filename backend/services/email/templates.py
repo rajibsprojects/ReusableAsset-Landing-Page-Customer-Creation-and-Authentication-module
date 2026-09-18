@@ -45,3 +45,11 @@ def welcome_email(name: str, customer_no: str) -> str:
                   f"<p>Your account has been created successfully. Your customer number is <strong>{customer_no}</strong>.</p>"
                   "<p>You can now explore Madam Boutique for custom tailoring and Madam Fashions for premium dress materials.</p>"
                   "<p>Warm regards,<br/>Team Madam Boutique</p>")
+
+
+def new_customer_notification(name: str, email: str, mobile: str, customer_no: str) -> str:
+    return layout("New Customer Registration",
+                  "<p>A new customer has successfully registered with Madam Fashions.</p>"
+                  f"<p>Customer Name: <strong>{name}</strong><br/>Email: {email}<br/>Mobile: {mobile}<br/>Customer No: <strong>{customer_no}</strong></p>"
+                  "<p>You may wish to contact the customer personally to welcome them.</p>"
+                  "<p>Regards,<br/>Madam Fashions Website</p>")

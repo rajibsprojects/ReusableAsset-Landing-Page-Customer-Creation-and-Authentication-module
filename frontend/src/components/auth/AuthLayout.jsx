@@ -15,9 +15,9 @@ export function AuthLayout({ children }) {
   );
 }
 
-export function AuthCard({ icon: Icon, label, title, subtitle, children, testId, muted = false }) {
+export function AuthCard({ icon: Icon, label, title, subtitle, children, testId, muted = false, className = "" }) {
   return (
-    <div className={`auth-card p-7 sm:p-9 ${muted ? "md:mt-6" : ""}`} data-testid={testId}>
+    <div className={`auth-card p-7 sm:p-9 ${muted ? "md:mt-6" : ""} ${className}`} data-testid={testId}>
       <div className="flex items-center justify-center gap-2 text-navy">
         {Icon && <Icon className="h-5 w-5" strokeWidth={1.6} />}
         <span className="font-heading text-xl">{label}</span>

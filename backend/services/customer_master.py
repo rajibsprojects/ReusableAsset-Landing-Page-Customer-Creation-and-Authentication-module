@@ -3,14 +3,16 @@ import logging
 from datetime import datetime, timezone
 from core.config import settings
 from core.database import db
+from core.timezone import format_app_time
 from services.content.sheets_writer import sheets_writer
 
 logger = logging.getLogger(__name__)
 
-# Column order follows the functional spec "customer_master" table.
+# Column order follows the functional spec "customer_master" table. Password is NEVER written.
 COLUMNS = {
     "customer_no": "customer_no", "customer_name": "name", "customer_email": "email",
-    "customer_contact_mbl": "contact_mobile", "customer_contact_other": "contact_other",
+    "customer_contact_mbl_cntry": "contact_mobile_cntry", "customer_contact_mbl": "contact_mobile",
+    "customer_contact_other_cntry": "contact_other_cntry", "customer_contact_other": "contact_other",
     "customer_address1": "address1", "customer_address2": "address2", "customer_city": "city",
     "customer_state": "state", "customer_pin": "pin", "customer_category": "category",
 }
@@ -19,8 +21,8 @@ COLUMNS = {
 def to_row(user: dict) -> dict:
     row = {col: (user.get(field) or "") for col, field in COLUMNS.items()}
     row["auth_provider"] = user.get("auth_provider", "")
-    row["created_at"] = user["created_at"].isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at") or "")
-    row["updated_at"] = datetime.now(timezone.utc).isoformat()
+    row["created_at"] = format_app_time(user.get("registered_at") or user.get("created_at"))
+    row["updated_at"] = format_app_time(user.get("updated_at") or datetime.now(timezone.utc))
     return row
 
 
@@ -34,6 +36,9 @@ class CustomerMasterService:
     async def sync_user(self, user_id: str) -> bool:
         user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
         if not user:
+            return False
+        if not user.get("customer_no") or not user.get("registration_complete", bool(user.get("customer_no"))):
+            logger.info("customer_master sync skipped for %s (registration incomplete)", user_id)
             return False
         if not self.enabled:
             await db.users.update_one({"user_id": user_id}, {"$set": {"sheet_sync_pending": True}})
@@ -55,7 +60,7 @@ class CustomerMasterService:
         asyncio.create_task(self.sync_user(user_id))
 
     async def sync_pending(self, force: bool = False) -> dict:
-        query = {} if force else {"$or": [{"sheet_sync_pending": True}, {"sheet_synced_at": {"$exists": False}}]}
+        query = {"customer_no": {"$ne": None}} if force else {"customer_no": {"$ne": None}, "$or": [{"sheet_sync_pending": True}, {"sheet_synced_at": {"$exists": False}}]}
         pending = await db.users.find(query, {"_id": 0, "user_id": 1}).to_list(length=1000)
         results = [await self.sync_user(u["user_id"]) for u in pending]
         summary = {"total": len(results), "synced": sum(results), "failed": len(results) - sum(results), "enabled": self.enabled}

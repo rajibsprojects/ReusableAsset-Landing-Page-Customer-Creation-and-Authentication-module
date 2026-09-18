@@ -6,8 +6,10 @@ import { useAuth } from "@/auth/useAuth";
 import { ROUTES } from "@/config/site";
 import { usePincodeLookup } from "@/hooks/usePincodeLookup";
 import { getErrorMessage } from "@/utils/formatError";
-import { isValidMobile, isValidPin, passwordIssues } from "@/utils/validators";
+import { isValidPin, mobileIssue, landlineIssue, passwordIssues } from "@/utils/validators";
+import { DEFAULT_COUNTRY_CODE } from "@/data/countryCodes";
 import { PasswordField } from "./PasswordField";
+import { PhoneInput } from "./PhoneInput";
 
 const Field = ({ id, label, required, hint, children }) => (
   <div>
@@ -21,17 +23,21 @@ const Field = ({ id, label, required, hint, children }) => (
 export function SignupDetailsForm({ token, email, redirectTo }) {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [f, setF] = useState({ name: "", contact_mobile: "", contact_other: "", address1: "", address2: "", city: "", state: "", pin: "", category: "", password: "", confirm: "" });
+  const [f, setF] = useState({ name: "", contact_mobile_cntry: DEFAULT_COUNTRY_CODE, contact_mobile: "", contact_other_cntry: DEFAULT_COUNTRY_CODE, contact_other: "", address1: "", address2: "", city: "", state: "", pin: "", category: "", password: "", confirm: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const setVal = (k) => (v) => setF((s) => ({ ...s, [k]: v }));
 
   const onPin = useCallback((data) => setF((s) => ({ ...s, city: data.city || s.city, state: data.state || s.state })), []);
   const pinStatus = usePincodeLookup(f.pin, onPin);
 
   const validate = () => {
     if (f.name.trim().length < 2) return "Please enter your full name";
-    if (!isValidMobile(f.contact_mobile)) return "Please enter a valid mobile number (10-15 digits)";
+    const m = mobileIssue(f.contact_mobile_cntry, f.contact_mobile);
+    if (m) return m;
+    const l = landlineIssue(f.contact_other_cntry, f.contact_other);
+    if (l) return l;
     if (f.address1.trim().length < 3) return "Please enter your address";
     if (!isValidPin(f.pin)) return "Please enter a valid 6-digit PIN code";
     if (!f.city.trim() || !f.state.trim()) return "Please enter your city and state";
@@ -50,7 +56,7 @@ export function SignupDetailsForm({ token, email, redirectTo }) {
     setBusy(true);
     try {
       const { confirm, ...rest } = f;
-      const user = await register({ ...rest, contact_other: f.contact_other || null, address2: f.address2 || null, category: f.category, verification_token: token });
+      const user = await register({ ...rest, contact_other: f.contact_other || null, contact_other_cntry: f.contact_other ? f.contact_other_cntry : null, address2: f.address2 || null, category: f.category, verification_token: token });
       toast.success(`Welcome, ${user.name.split(" ")[0]}! Your account is ready.`);
       navigate(redirectTo || ROUTES.account, { replace: true });
     } catch (err) {
@@ -72,11 +78,11 @@ export function SignupDetailsForm({ token, email, redirectTo }) {
         <input id="su-email" value={email} disabled className="field-input" data-testid="signup-email-locked-input" />
       </Field>
       <div className="grid sm:grid-cols-2 gap-4">
-        <Field id="su-mobile" label="Mobile Number" required>
-          <input id="su-mobile" value={f.contact_mobile} onChange={set("contact_mobile")} className="field-input" placeholder="10-digit mobile" inputMode="tel" autoComplete="tel" data-testid="signup-mobile-input" />
+        <Field id="su-mobile" label="Mobile Number" required hint="Select country code, then enter the number without it">
+          <PhoneInput id="su-mobile" countryCode={f.contact_mobile_cntry} number={f.contact_mobile} onCountryChange={setVal("contact_mobile_cntry")} onNumberChange={setVal("contact_mobile")} placeholder="9890788742" maxLength={14} testId="signup-mobile-input" required />
         </Field>
-        <Field id="su-landline" label="Landline (optional)">
-          <input id="su-landline" value={f.contact_other} onChange={set("contact_other")} className="field-input" placeholder="With STD code" inputMode="tel" data-testid="signup-landline-input" />
+        <Field id="su-landline" label="Landline / Other Contact (optional)" hint="With STD code, digits only">
+          <PhoneInput id="su-landline" countryCode={f.contact_other_cntry} number={f.contact_other} onCountryChange={setVal("contact_other_cntry")} onNumberChange={setVal("contact_other")} placeholder="03312345678" maxLength={15} testId="signup-landline-input" />
         </Field>
       </div>
       <Field id="su-addr1" label="Address Line 1" required hint="Apartment / House no., Building">
