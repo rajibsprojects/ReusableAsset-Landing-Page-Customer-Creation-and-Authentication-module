@@ -121,11 +121,13 @@ function upsertRowUnlocked_(sheetId, tab, keyColumn, row, createOnly) {
   var values = headers.map(function (h, i) { var n = norm_(h); return rowByNorm.hasOwnProperty(n) ? rowByNorm[n] : existing[i]; });
   if (targetRow > 0) {
     if (createOnly) throw new Error('Customer record already exists for ' + keyColumn + ' ' + keyValue + ' (create-only operation)');
-    sheet.getRange(targetRow, 1, 1, headers.length).setValues([values]);
+    sheet.getRange(targetRow, 1, 1, headers.length).setNumberFormat('@').setValues([values]);
     return { ok: true, action: 'updated', rowNumber: targetRow };
   }
-  sheet.appendRow(values);
-  return { ok: true, action: 'inserted', rowNumber: sheet.getLastRow() };
+  // Force plain-text cells so '+91' and leading zeros ('03312345678') are preserved exactly as sent.
+  var newRow = sheet.getLastRow() + 1;
+  sheet.getRange(newRow, 1, 1, headers.length).setNumberFormat('@').setValues([values]);
+  return { ok: true, action: 'inserted', rowNumber: newRow };
 }
 
 // Transactional customer creation: series read -> customer_master write -> series increment, under one lock.

@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration 5: End-to-end validation of Module 1 major fix batch (country-code + digits-only phones, duplicate-mobile server check, Google incomplete-profile flow, IST timestamps, series consumption discipline, forgot/reset, 4-min idle session timeout, /login vs /signup card ordering). Backend pytest suite (30/30 passing) + browser flow (layout, PhoneInput filters, full email signup -> /account, profile landline edit +44, duplicate-mobile 409 on profile). Series moved from 15 -> 21 with exactly one increment per successful create (email + Google), never on failure/duplicate/validation error.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "Google Sheet customer_master", "issue": "For email-registration rows written via createCustomer the country-code cells (customer_contact_mbl_cntry / customer_contact_other_cntry) are stored as numbers so the leading '+' is dropped (e.g. '+91' displayed as '91', '+1' as '1'). Rows written for Google-completed users (also via createCustomer) preserve '+91'. Landline '03312345678' is also stripped to '3312345678' when written from email flow. API/Mongo values are correct, only the sheet cell format differs. Recommend the Apps Script to force text format (setNumberFormat('@')) on customer_contact_mbl_cntry / _other_cntry / _other / _mbl columns before setValues, or prefix with a leading apostrophe when writing."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_module1_full.py",
+    "/app/test_reports/pytest/iteration_5.xml"
+  ],
+  "action_items": [
+    "Fix Apps Script createCustomer/upsertRow to preserve leading '+' and leading zeros on phone-related columns (format the destination columns as plain text before setValues)."
+  ],
+  "critical_code_review_comments": [
+    "auth/service.py assert_mobile_available also matches legacy rows with no country code (contact_mobile_cntry in [None,'']). This is intentional per team note but should be revisited when legacy rows are backfilled with '+91' - once done, drop the $or branch to avoid false positives across country codes.",
+    "services/customer_series.py catches all exceptions and returns 503; consider logging the underlying Apps Script error message so ops can distinguish 'series exhausted' vs 'network' vs 'concurrent write'.",
+    "SheetsWriter uses httpx follow_redirects=True per request (creates a new AsyncClient each call). Consider a module-level client with keep-alive to reduce Apps Script latency for bursty registration.",
+    "REQUIRED_PROFILE_FIELDS omits contact_other* - correct (landline optional). But is_profile_complete only checks truthiness; the update_profile flow relies on validate_landline being called only when field is present, which is fine."
+  ],
+  "updated_files": ["/app/backend/tests/test_module1_full.py", "/app/test_reports/iteration_5.json"],
+  "success_rate": {"backend": "100% (30/30)", "frontend": "100% (layout /login+/signup, PhoneInput filters, full signup->account, profile landline update, duplicate mobile 409)"},
+  "test_credentials": "test.customer@madamboutique.in / Madam@1234 (unchanged). +91 9876543210 used by seed - kept for duplicate tests.",
+  "seed_data_creation": "Registered 5+ QA email users (qa.*@example.org) and 1 QA google user via API (CUST-000015..CUST-000020). Registered 1 QA UI user via browser (CUST-000021). All Mongo qa.* records deleted post-run. Per instructions, sheet rows were NOT deleted. Series ended at 21.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Series is now at 21 (next customer_no = CUST-000021... wait, CUST-000021 was UI test - so next = CUST-000022). Backend behaviour is stable. Only outstanding item is the sheet cell number-formatting for country-code / phone columns (leading '+' and '0' stripped for email-flow rows). Full 4-minute frontend inactivity redirect test was NOT executed via Playwright to save runtime, but backend idle-timeout logic is directly verified via mongosh (test_session_idle_timeout_401). If you need to validate the browser SessionGuard live, use page.wait_for_timeout(250000) after login and assert redirect to /login.",
+  "rca of the issue": "Sheet number-formatting bug RCA: Google Sheets treats a purely numeric-looking string ('+91', '03312345678') as a number and drops the leading '+' / '0' unless the target cell is formatted as text. Google-flow rows for the two google users happened to be written into cells that were already text-formatted (either manual formatting on those specific ranges or the flow going through a different code path that pre-formats). Fix: In Code.gs upsertRow_ / createCustomer_, after computing target row and before setValues, call sheet.getRange(row, 1, 1, headers.length).setNumberFormat('@') OR force text by prefixing with an apostrophe for the four phone columns."
+}
