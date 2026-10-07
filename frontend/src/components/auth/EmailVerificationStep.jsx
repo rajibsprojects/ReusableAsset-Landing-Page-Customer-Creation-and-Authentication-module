@@ -48,7 +48,8 @@ export function EmailVerificationStep({ redirectTo }) {
 
   return (
     <div className="space-y-4">
-      <GoogleButton label="Sign Up with Google" onClick={() => loginWithGoogle(redirectTo)} testId="signup-google-button" />
+      <GoogleButton label="Sign Up with Google" onClick={() => loginWithGoogle(redirectTo, "signup")} testId="signup-google-button" />
+      <p className="text-xs text-steel -mt-2" data-testid="signup-google-hint">Google will use the account you are currently signed into in this browser. To register with a different Google account, switch accounts at google.com first.</p>
       <OrnamentDivider><span className="text-xs tracking-wide text-steel">Or Sign Up with Email</span></OrnamentDivider>
       <form onSubmit={submit} className="space-y-4" noValidate data-testid="signup-email-form">
         <div>

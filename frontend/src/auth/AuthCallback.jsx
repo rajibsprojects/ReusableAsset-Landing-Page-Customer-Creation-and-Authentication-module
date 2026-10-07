@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 import { authService } from "@/services/authService";
-import { consumePostLoginRedirect } from "@/utils/redirect";
+import { consumePostLoginRedirect, consumeGoogleIntent } from "@/utils/redirect";
 import { getErrorMessage } from "@/utils/formatError";
 import { PageLoader } from "@/components/common/PageLoader";
 
@@ -20,11 +20,18 @@ export function AuthCallback() {
     const run = async () => {
       try {
         const user = await authService.exchangeGoogleSession(sessionId);
+        const intent = consumeGoogleIntent();
         setUser(user);
         window.history.replaceState(null, "", location.pathname);
         if (!user.registration_complete) {
           toast.info("Welcome! Please complete your profile to finish registration.");
           navigate("/account", { replace: true });
+          return;
+        }
+        if (intent === "signup") {
+          toast.warning(`${user.email} is already registered as ${user.customer_no}. You have been signed in to that account.`, { duration: 8000 });
+          consumePostLoginRedirect();
+          navigate("/account", { replace: true, state: { user, alreadyRegistered: true } });
           return;
         }
         navigate(consumePostLoginRedirect("/account"), { replace: true, state: { user } });

@@ -28,7 +28,7 @@ export default function LoginPage() {
       </AuthCard>
       <AuthCard icon={UserPlus} label="Sign Up" title="Create Your Account" subtitle="Join Madam Boutique & Madam Fashions" testId="login-signup-teaser-card" muted>
         <div className="space-y-4">
-          <GoogleButton label="Sign Up with Google" onClick={() => loginWithGoogle(redirectTo)} testId="teaser-signup-google-button" />
+          <GoogleButton label="Sign Up with Google" onClick={() => loginWithGoogle(redirectTo, "signup")} testId="teaser-signup-google-button" />
           <OrnamentDivider><span className="text-xs tracking-wide text-steel">Or Sign Up with Email</span></OrnamentDivider>
           <Link to={ROUTES.signup} state={{ from: redirectTo }} className="btn-navy w-full" data-testid="teaser-signup-email-button">Sign Up with Email</Link>
           <p className="text-xs text-center text-steel">We'll verify your email, then you complete your details.</p>

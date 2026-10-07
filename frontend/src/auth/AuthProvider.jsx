@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./AuthContext";
 import { authService } from "@/services/authService";
-import { setPostLoginRedirect } from "@/utils/redirect";
+import { setPostLoginRedirect, setGoogleIntent } from "@/utils/redirect";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = checking, null = guest
@@ -47,8 +47,9 @@ export function AuthProvider({ children }) {
           setUser(null);
         }
       },
-      loginWithGoogle: (redirectPath) => {
+      loginWithGoogle: (redirectPath, intent = "login") => {
         setPostLoginRedirect(redirectPath);
+        setGoogleIntent(intent);
         authService.startGoogleLogin();
       },
       updateProfile: async (payload) => {
