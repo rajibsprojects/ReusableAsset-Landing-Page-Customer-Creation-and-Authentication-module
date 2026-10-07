@@ -77,14 +77,12 @@ export function SignupDetailsForm({ token, email, redirectTo }) {
       <Field id="su-email" label="Email Address" required>
         <input id="su-email" value={email} disabled className="field-input" data-testid="signup-email-locked-input" />
       </Field>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field id="su-mobile" label="Mobile Number" required hint="Select country code, then enter the number without it">
-          <PhoneInput id="su-mobile" countryCode={f.contact_mobile_cntry} number={f.contact_mobile} onCountryChange={setVal("contact_mobile_cntry")} onNumberChange={setVal("contact_mobile")} placeholder="9890788742" maxLength={14} testId="signup-mobile-input" required />
-        </Field>
-        <Field id="su-landline" label="Landline / Other Contact (optional)" hint="With STD code, digits only">
-          <PhoneInput id="su-landline" countryCode={f.contact_other_cntry} number={f.contact_other} onCountryChange={setVal("contact_other_cntry")} onNumberChange={setVal("contact_other")} placeholder="03312345678" maxLength={15} testId="signup-landline-input" />
-        </Field>
-      </div>
+      <Field id="su-mobile" label="Mobile Number" required hint="Select country code, then enter the number without it">
+        <PhoneInput id="su-mobile" countryCode={f.contact_mobile_cntry} number={f.contact_mobile} onCountryChange={setVal("contact_mobile_cntry")} onNumberChange={setVal("contact_mobile")} placeholder="9890788742" maxLength={14} testId="signup-mobile-input" required />
+      </Field>
+      <Field id="su-landline" label="Landline / Other Contact (optional)" hint="With STD code, digits only">
+        <PhoneInput id="su-landline" countryCode={f.contact_other_cntry} number={f.contact_other} onCountryChange={setVal("contact_other_cntry")} onNumberChange={setVal("contact_other")} placeholder="03312345678" maxLength={15} testId="signup-landline-input" />
+      </Field>
       <Field id="su-addr1" label="Address Line 1" required hint="Apartment / House no., Building">
         <input id="su-addr1" value={f.address1} onChange={set("address1")} className="field-input" placeholder="Flat / House no., Building" autoComplete="address-line1" data-testid="signup-address1-input" />
       </Field>
