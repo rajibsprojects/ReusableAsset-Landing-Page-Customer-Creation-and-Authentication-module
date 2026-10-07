@@ -6,7 +6,7 @@ import os
 import requests
 import pytest
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://madam-home-login.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://elegance-auth-1.preview.emergentagent.com").rstrip("/")
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7Clg1ZaMOMjMNVHfaWR2aqZROeuhTRC4-dRvwGPwdfWX1wq3vK-kZ88U0AxtrPV9C/exec"
 KEY = "MF_DEV_Ky18O5FvW4KfQzON"
 CUST_SHEET = "1jpiygdMaW47DUt8ogKXaOsw773l3j80HDVsc8v6DGhQ"
