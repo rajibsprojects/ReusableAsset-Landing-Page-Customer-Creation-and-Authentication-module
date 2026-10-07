@@ -50,3 +50,9 @@ Home (Hero, About Business, Lines of Business, About Owner, Contact — dynamic 
 - Decision: duplicate email/mobile validation stays against MongoDB (user chose no change for now); sheet-based validation proposal documented in chat.
 - MongoDB collections wiped on request (users, sessions, login_attempts, counters); customer_series_master reset to 1 by user.
 - Registration email subjects (owner alert AND customer welcome) are now per-customer: `New Customer: {name} ({customer_no}) — Madam Fashions` so Gmail does not thread them.
+
+## 2026-10-07 — Forked session re-pointed to NEW Google Sheets
+- backend/.env now uses new Apps Script deployment (`AKfycbzAt1xp...`) + new sheet IDs (business `1mK6ooiU...`, customer_master `1pr61_y3...`, series `1rrYE2YS...`). Original config backed up at `/app/memory/.env.backup_original_sheets`.
+- Apps Script secret lives in Script Property `API_KEY` (not in code) — missing property => every call returns `Unauthorized`.
+- LEARNING: a forked preview COPIES the MongoDB of the original session. Old users caused "email already exists" and Google login attaching to old customer ids. Fixed by wiping auth collections; seed CUST-000000 re-created. Verified iteration_7 (9/9 backend + signup UI). QA record `qa.forktest.*@example.com` CUST-000001 now exists in new sheet; series at 2.
+- User instruction: do NOT build Module 2/3 until explicitly asked.

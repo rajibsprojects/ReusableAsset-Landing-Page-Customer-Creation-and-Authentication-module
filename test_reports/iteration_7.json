@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 7 (fork + DB wipe validation, both backend+frontend). All 9 backend tests PASS and frontend signup smoke PASS. Verified: (1) /api/content/business _meta.source=='apps_script' and business_name=='Madam Boutique & Fashions'; (2) /api/integrations/status returns apps_script_configured/customer_master_sync_enabled/customer_series_configured all true; (3) verify-email/request with brand-new email returns dev_link and NO 'already exists'; (4) THE REPORTED BUG IS FIXED: verify-email/request with rajib_sengupta@yahoo.com (old-env email) no longer returns 'already exists' after DB wipe; (5) Full registration flow (verify -> confirm -> register -> login -> /me) succeeded, got customer_no CUST-000001 (first in new series) for qa.forktest.<ts>@example.com mobile +91 9000011122; (6) New row present in NEW customer_master Google Sheet (sheetId 1pr61_...); (7) customer_series_master incremented from 1 to 2; (8) duplicate mobile 9000011122 rejected with mobile error; (9) duplicate email rejected with 'already exists'. Frontend /signup page renders correctly with 'Sign Up with Google' button present; submitting new email shows 'Check your inbox' success state with 'Open verification link (development mode)' dev link - no 'already exists' error.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_fork_module1.py",
+    "/app/test_reports/pytest/iteration_7.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fork fix (Mongo wipe + new sheets) works end-to-end. Reported bug (verify-email saying 'already exists' for old-env emails) is fully resolved - direct test with rajib_sengupta@yahoo.com now succeeds.",
+    "Note: Resend 'could not deliver' warning is shown next to the dev link on the signup success screen in test mode - expected per agent-to-agent context, not a bug."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_fork_module1.py",
+    "/app/test_reports/iteration_7.json"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% (signup smoke)"},
+  "test_credentials": "Seed test.customer@madamboutique.in / Madam@1234 still works. QA created qa.forktest.<ts>@example.com / Madam@1234 -> CUST-000001.",
+  "seed_data_creation": "Registered 1 real customer -> CUST-000001 (new series) in NEW customer_master sheet (sheetId 1pr61_y32OFKSnQ_h29eeSPuHspS38BDm7OXTqgFKzRM, tab customer_master), mobile +91 9000011122. Series advanced from 1 to 2. One extra verify-email request for duplicate-mobile negative test (no row written since register rejected pre-sheet). One frontend-side verify-email request (no register). Mongo users NOT wiped post-run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "NEW customer_master sheet now holds CUST-000001 (qa.forktest.<ts>@example.com, +91 9000011122). Series is at 2 -> next registration will be CUST-000002. Avoid mobile 9000011122 and 9876543210 in new registrations. Dev-link flow confirmed to be the reliable path for QA (Resend test-mode cannot deliver to arbitrary addresses). Both backend (pytest) and frontend (signup page) are green.",
+  "rca of the issue": "Reported bug: 'already exists' on old emails after fork and Google sign-up logging into old customer id. RCA: Forked environment inherited OLD MongoDB (users, user_sessions, email_verifications, counters) while backend was repointed to NEW Google Sheets. The duplicate-email guard in auth/service.py queries Mongo, which still had the old user rows -> false positive 'already exists'; Google sign-in matched the same old Mongo user -> old customer_no returned. Mitigation applied by main agent: wiped the above collections and restarted backend; the seed user CUST-000000 is re-created idempotently. Verification in this iteration: (a) brand-new emails and the specific old-env email rajib_sengupta@yahoo.com both now get a fresh verification link (no false 'already exists'); (b) first fresh registration lands in NEW customer_master as CUST-000001 and series increments to 2; (c) duplicate guards still work for genuine duplicates (same email, same mobile)."
+}
