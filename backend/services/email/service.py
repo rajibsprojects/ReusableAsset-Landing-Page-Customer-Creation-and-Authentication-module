@@ -58,7 +58,8 @@ class EmailService:
             return False
         mobile = f"{user.get('contact_mobile_cntry') or ''} {user.get('contact_mobile') or ''}".strip()
         html = templates.new_customer_notification(user.get("name", ""), user.get("email", ""), mobile, user.get("customer_no", ""))
-        return await self.send(owner, "New Customer Registration — Madam Fashions", html, user.get("email"))
+        subject = f"New Customer: {user.get('name', '')} ({user.get('customer_no', '')}) — Madam Fashions"
+        return await self.send(owner, subject, html, user.get("email"))
 
 
 email_service = EmailService(build_provider())
