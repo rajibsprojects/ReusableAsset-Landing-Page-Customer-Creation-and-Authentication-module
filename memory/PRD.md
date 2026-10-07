@@ -49,3 +49,4 @@ Home (Hero, About Business, Lines of Business, About Owner, Contact — dynamic 
 - Sender stays `SENDER_EMAIL` in .env (`onboarding@resend.dev` test mode: Resend only delivers to rajibsprojects@gmail.com until a domain is verified). After domain verification only `.env SENDER_EMAIL` needs changing — no code change.
 - Decision: duplicate email/mobile validation stays against MongoDB (user chose no change for now); sheet-based validation proposal documented in chat.
 - MongoDB collections wiped on request (users, sessions, login_attempts, counters); customer_series_master reset to 1 by user.
+- Registration email subjects (owner alert AND customer welcome) are now per-customer: `New Customer: {name} ({customer_no}) — Madam Fashions` so Gmail does not thread them.

@@ -49,7 +49,8 @@ class EmailService:
         return await self.send(to, "Reset your password - Madam Boutique", templates.password_reset_email(link), await self.owner_email())
 
     async def send_welcome_email(self, to: str, name: str, customer_no: str) -> bool:
-        return await self.send(to, "Welcome to Madam Boutique & Madam Fashions", templates.welcome_email(name, customer_no), await self.owner_email())
+        subject = f"New Customer: {name} ({customer_no}) — Madam Fashions"
+        return await self.send(to, subject, templates.welcome_email(name, customer_no), await self.owner_email())
 
     async def send_new_customer_notification(self, user: dict) -> bool:
         owner = await self.owner_email()
