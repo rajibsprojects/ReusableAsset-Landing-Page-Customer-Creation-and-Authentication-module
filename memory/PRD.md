@@ -56,3 +56,4 @@ Home (Hero, About Business, Lines of Business, About Owner, Contact — dynamic 
 - Apps Script secret lives in Script Property `API_KEY` (not in code) — missing property => every call returns `Unauthorized`.
 - LEARNING: a forked preview COPIES the MongoDB of the original session. Old users caused "email already exists" and Google login attaching to old customer ids. Fixed by wiping auth collections; seed CUST-000000 re-created. Verified iteration_7 (9/9 backend + signup UI). QA record `qa.forktest.*@example.com` CUST-000001 now exists in new sheet; series at 2.
 - User instruction: do NOT build Module 2/3 until explicitly asked.
+- Seed test user DISABLED (`SEED_TEST_USER_EMAIL=""`) and all auth collections wiped again; user removed test rows from sheet and reset series to 1. Environment is now a clean slate for client-facing testing.
