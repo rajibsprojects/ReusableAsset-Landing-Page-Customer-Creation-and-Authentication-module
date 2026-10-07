@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only testing of the Google-signup-intent bug fix. All 7 critical scenarios pass: signup page shows google button + hint, signup/login buttons set correct madam.googleIntent and navigate to auth.emergentagent.com, mocked callback with intent=signup for an already-registered Google user shows the google-already-registered-notice (with correct email + CUST-000002) plus a 'already registered' sonner toast, intent=login suppresses the notice, a brand-new Google user sees profile-incomplete-notice (not the already-registered one), the already-registered-logout-button successfully logs the user out and returns them to /login, and the real /api/auth/verify-email/request endpoint still returns a dev_link for a brand-new email (no regression). Did NOT complete any real registration (sheet protection respected).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_8.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AuthCallback.jsx correctly consumes googleIntent BEFORE navigate so the one-shot flag is cleared regardless of path taken.",
+    "AlreadyRegisteredNotice relies on router state.alreadyRegistered — if the user reloads /account the notice disappears, which is intentional and consistent with a transient warning (good UX).",
+    "setGoogleIntent is called synchronously before authService.startGoogleLogin() which performs window.location change — ordering is safe.",
+    "Minor: AuthProvider.useEffect skips /me when hash contains session_id= but setUser(null) is still called synchronously; this is fine because AuthCallback setUser(user) immediately follows. No action needed.",
+    "Consider also showing the hint on /login teaser-signup card (currently hint only on /signup page). Low priority."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (7/7 scenarios)"},
+  "test_credentials": "Google OAuth mocked via Playwright route for /api/auth/google/session and /api/auth/me as instructed. No real registration performed.",
+  "seed_data_creation": "None. One throwaway /api/auth/verify-email/request call made with a random test_regression_<ts>@example.com email — no registration completed, so no row written to the client's sheet.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Google-signup-intent fix is working end-to-end on frontend. Validated via sessionStorage key madam.googleIntent + mocked /api/auth/google/session + /api/auth/me returning registration_complete=true/false. All data-testids present (signup-google-button, signup-google-hint, login-google-button, teaser-signup-google-button, google-already-registered-notice, already-registered-logout-button, profile-incomplete-notice). Note: when overriding window.location.href via init script to intercept navigation, sessionStorage becomes inaccessible due to origin change — intercept the HTTP navigation request instead (page.on('request')) which was used successfully.",
+  "rca of the issue": "Fix is frontend-only workaround since Emergent OAuth gateway doesn't forward prompt=select_account. Approach: differentiate user intent via sessionStorage, then in AuthCallback detect (intent==='signup' && registration_complete===true) and surface a clear notice + toast explaining the Google-account-to-customer mapping. Verified behaviour: setGoogleIntent runs before window.location change; consumeGoogleIntent in callback removes the key atomically (one-shot semantics)."
+}
