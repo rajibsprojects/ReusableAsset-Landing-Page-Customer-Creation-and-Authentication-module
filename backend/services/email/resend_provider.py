@@ -10,7 +10,9 @@ class ResendProvider(EmailProvider):
         resend.api_key = api_key
         self.sender = sender
 
-    async def send(self, to: str, subject: str, html: str) -> str:
+    async def send(self, to: str, subject: str, html: str, reply_to: str | None = None) -> str:
         params = {"from": self.sender, "to": [to], "subject": subject, "html": html}
+        if reply_to:
+            params["reply_to"] = reply_to
         result = await asyncio.to_thread(resend.Emails.send, params)
         return (result or {}).get("id", "")

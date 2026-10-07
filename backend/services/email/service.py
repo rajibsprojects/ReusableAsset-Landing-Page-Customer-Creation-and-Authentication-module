@@ -4,6 +4,7 @@ from services.email.base import EmailProvider
 from services.email.console_provider import ConsoleProvider
 from services.email.resend_provider import ResendProvider
 from services.email import templates
+from services.content.service import content_service
 
 logger = logging.getLogger(__name__)
 
@@ -22,31 +23,42 @@ class EmailService:
     def __init__(self, provider: EmailProvider):
         self.provider = provider
 
-    async def send(self, to: str, subject: str, html: str) -> bool:
+    async def send(self, to: str, subject: str, html: str, reply_to: str | None = None) -> bool:
         try:
-            message_id = await self.provider.send(to, subject, html)
-            logger.info("Email sent via %s to %s (id=%s)", self.provider.name, to, message_id)
+            message_id = await self.provider.send(to, subject, html, reply_to)
+            logger.info("Email sent via %s to %s reply_to=%s (id=%s)", self.provider.name, to, reply_to, message_id)
             return True
         except Exception as exc:  # noqa: BLE001
             logger.error("Email send failed via %s to %s: %s", self.provider.name, to, type(exc).__name__)
             return False
 
+    async def owner_email(self) -> str:
+        """Business owner's address from business_owner_data (Owner_Data.business_email_address); .env fallback."""
+        try:
+            content = await content_service.get_business_content()
+            sheet_email = (content.get("business_email_address") or "").strip()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not read business_email_address from sheet: %s", exc)
+            sheet_email = ""
+        return sheet_email or settings.BUSINESS_NOTIFY_EMAIL
+
     async def send_verification_email(self, to: str, link: str) -> bool:
-        return await self.send(to, "Verify your email - Madam Boutique", templates.verification_email(link))
+        return await self.send(to, "Verify your email - Madam Boutique", templates.verification_email(link), await self.owner_email())
 
     async def send_password_reset_email(self, to: str, link: str) -> bool:
-        return await self.send(to, "Reset your password - Madam Boutique", templates.password_reset_email(link))
+        return await self.send(to, "Reset your password - Madam Boutique", templates.password_reset_email(link), await self.owner_email())
 
     async def send_welcome_email(self, to: str, name: str, customer_no: str) -> bool:
-        return await self.send(to, "Welcome to Madam Boutique & Madam Fashions", templates.welcome_email(name, customer_no))
+        return await self.send(to, "Welcome to Madam Boutique & Madam Fashions", templates.welcome_email(name, customer_no), await self.owner_email())
 
     async def send_new_customer_notification(self, user: dict) -> bool:
-        if not settings.BUSINESS_NOTIFY_EMAIL:
-            logger.warning("BUSINESS_NOTIFY_EMAIL not configured; owner notification skipped")
+        owner = await self.owner_email()
+        if not owner:
+            logger.warning("No business_email_address in sheet and BUSINESS_NOTIFY_EMAIL not configured; owner notification skipped")
             return False
         mobile = f"{user.get('contact_mobile_cntry') or ''} {user.get('contact_mobile') or ''}".strip()
         html = templates.new_customer_notification(user.get("name", ""), user.get("email", ""), mobile, user.get("customer_no", ""))
-        return await self.send(settings.BUSINESS_NOTIFY_EMAIL, "New Customer Registration — Madam Fashions", html)
+        return await self.send(owner, "New Customer Registration — Madam Fashions", html, user.get("email"))
 
 
 email_service = EmailService(build_provider())

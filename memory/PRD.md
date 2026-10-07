@@ -41,3 +41,11 @@ Home (Hero, About Business, Lines of Business, About Owner, Contact — dynamic 
 ## Next tasks
 1. Client confirms Module 1 UI/visual fidelity; fill remaining `Owner_data` cells (about_business, about_owner, owner_photo_url, business_logo)
 2. Start Module 2 using `useAuth` + `ProtectedRoute` + Apps Script appendRows contract
+
+
+## 2026-10-07 — Email wiring update
+- All customer emails (verification, welcome, password reset) now carry `Reply-To` = `business_email_address` read from business_owner_data (Owner_Data tab) via content_service; fallback `BUSINESS_NOTIFY_EMAIL` (.env).
+- Owner "New Customer Registration" alert is sent TO the sheet's `business_email_address` (fallback .env) with Reply-To = the new customer's email.
+- Sender stays `SENDER_EMAIL` in .env (`onboarding@resend.dev` test mode: Resend only delivers to rajibsprojects@gmail.com until a domain is verified). After domain verification only `.env SENDER_EMAIL` needs changing — no code change.
+- Decision: duplicate email/mobile validation stays against MongoDB (user chose no change for now); sheet-based validation proposal documented in chat.
+- MongoDB collections wiped on request (users, sessions, login_attempts, counters); customer_series_master reset to 1 by user.
